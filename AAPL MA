@@ -1,0 +1,24 @@
+import matplotlib.pyplot as plt
+!pip install yfinance
+import yfinance as yf
+# Download Apple stock prices for the last 6 months
+data = yf.download("AAPL", period="6mo")
+
+# Plot closing prices
+plt.figure(figsize=(10,5))   # make the chart bigger
+plt.plot(data["Close"], label="Apple Stock Price")
+plt.title("Apple Stock Closing Price (Last 6 Months)")
+plt.xlabel("Date")
+plt.ylabel("Price (USD)")
+plt.legend()
+plt.show()
+data["MA50"] = data["Close"].rolling(50).mean()  # 50-day moving average
+
+plt.figure(figsize=(10,5))
+plt.plot(data["Close"], label="Apple Stock Price")
+plt.plot(data["MA50"], label="50-day MA", linestyle="--")
+plt.title("Apple Stock Price with Moving Average")
+plt.xlabel("Date")
+plt.ylabel("Price (USD)")
+plt.legend()
+plt.show()
