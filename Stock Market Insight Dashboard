@@ -199,7 +199,9 @@ def generate_insight_summary(ticker, data):
     print(f"   - Latest 20-Day Volatility: {latest_volatility:.4f}")
     print(f"   - Current Risk Profile: {risk_level}")
 
+    print("\nDisclaimer: This is a data-driven summary and not financial advice.")
     print("-" * 50)
+
 
 # Generate summaries for all stocks
 for ticker in tickers:
