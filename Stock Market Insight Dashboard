@@ -7,26 +7,21 @@
 #
 # Description:
 # This script collects, analyzes, and visualizes stock market data for
-# specified companies. It calculates key technical indicators like moving
-# averages and volatility, generates insightful plots, and produces dynamic
-# text summaries of the stock's performance. This project is designed to
-# be run in a Google Colab environment.
+# specified companies. It calculates key technical indicators and
+# generates insightful plots. This project is designed to be run in a
+# Google Colab environment.
 #
 # ----------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------
 # Step 1: Install and Import Necessary Libraries
 # ----------------------------------------------------------------------------
-# We start by installing 'yfinance', a popular library to fetch historical
-# market data from Yahoo Finance.
-
 try:
     import yfinance as yf
 except ImportError:
     print("yfinance not found. Installing...")
-    import subprocess
-    import sys
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "yfinance"])
+    # Use !pip install for Colab environments
+    !pip install yfinance -q
     import yfinance as yf
 
 import pandas as pd
@@ -43,21 +38,15 @@ print("Libraries installed and imported successfully.")
 # ----------------------------------------------------------------------------
 # Step 2: Define Stocks and Data Collection Period
 # ----------------------------------------------------------------------------
-# Here we specify the stock tickers and the time frame for our analysis.
-# Tickers: AAPL (Apple), RYAAY (Ryanair), UBER (Uber)
-# We'll analyze data from the last two years.
-
 tickers = ['AAPL', 'RYAAY', 'UBER']
-# Using .normalize() removes the time component, ensuring we get clean dates.
 start_date = (pd.to_datetime('today') - pd.DateOffset(years=2)).normalize()
 end_date = pd.to_datetime('today').normalize()
 
-# Download the data using yfinance
-# We use a dictionary to store the data for each stock.
 stock_data = {}
 for ticker in tickers:
     try:
-        data = yf.download(ticker, start=start_date, end=end_date)
+        # Added progress=False to keep the output clean
+        data = yf.download(ticker, start=start_date, end=end_date, progress=False)
         if data.empty:
             print(f"No data found for {ticker}. It might be a delisted or incorrect ticker.")
         else:
@@ -69,27 +58,11 @@ for ticker in tickers:
 # ----------------------------------------------------------------------------
 # Step 3: Calculate Key Indicators
 # ----------------------------------------------------------------------------
-# We will now calculate:
-# 1. Moving Averages (MA): Short-term (20-day) and long-term (50-day) SMAs.
-#    These help in identifying trends. A short-term MA crossing above a
-#    long-term MA is a bullish signal (Golden Cross).
-#
-# 2. Daily Returns: The percentage change in the closing price. This is key
-#    for understanding profitability and risk.
-#
-# 3. Volatility: The rolling standard deviation of daily returns. This
-#    measures the risk or price fluctuation of a stock over time.
-
 for ticker, data in stock_data.items():
     if not data.empty:
-        # 1. Moving Averages
         data['SMA_20'] = data['Close'].rolling(window=20).mean()
         data['SMA_50'] = data['Close'].rolling(window=50).mean()
-
-        # 2. Daily Returns
         data['Daily_Return'] = data['Close'].pct_change()
-
-        # 3. Volatility (20-day rolling standard deviation of returns)
         data['Volatility'] = data['Daily_Return'].rolling(window=20).std()
 
 print("\nKey indicators calculated for all stocks.")
@@ -98,11 +71,6 @@ print("\nKey indicators calculated for all stocks.")
 # ----------------------------------------------------------------------------
 # Step 4: Generate Visualizations
 # ----------------------------------------------------------------------------
-# For each stock, we will create three distinct and informative plots:
-# 1. Line Chart: Stock Price with Moving Averages (top, wide plot).
-# 2. Histogram: Distribution of Daily Returns (bottom-left).
-# 3. Volatility Chart: Rolling volatility over time (bottom-right).
-
 def create_dashboard(ticker, data):
     """Generates and displays a set of plots for a given stock."""
     if data.empty:
@@ -111,22 +79,13 @@ def create_dashboard(ticker, data):
 
     print(f"\n--- Generating Dashboard for {ticker} ---")
 
-    # --- CORRECTED PLOTTING SETUP ---
-    # Create a figure to hold the plots.
     fig = plt.figure(figsize=(20, 14))
     fig.suptitle(f'Financial Dashboard for {ticker}', fontsize=24, weight='bold')
-
-    # Use GridSpec for a robust and flexible subplot layout.
-    # We define a 2x2 grid to arrange the three plots.
     gs = GridSpec(2, 2, figure=fig)
 
-    # The first plot (ax1) will span the entire first row.
     ax1 = fig.add_subplot(gs[0, :])
-    # The second plot (ax2) will be in the second row, first column.
     ax2 = fig.add_subplot(gs[1, 0])
-    # The third plot (ax3) will be in the second row, second column.
     ax3 = fig.add_subplot(gs[1, 1])
-    # --- END OF CORRECTION ---
 
     # --- Plot 1: Stock Price and Moving Averages ---
     ax1.plot(data.index, data['Close'], label='Close Price', color='blue', alpha=0.8)
@@ -134,13 +93,8 @@ def create_dashboard(ticker, data):
     ax1.plot(data.index, data['SMA_50'], label='50-Day SMA', color='red', linestyle='--')
     ax1.set_title(f'{ticker} Stock Price and Moving Averages', fontsize=16)
     ax1.set_ylabel('Price (USD)', fontsize=12)
-    ax1.set_xlabel('Date', fontsize=12)
     ax1.legend(fontsize=12)
     ax1.grid(True)
-    # Format the x-axis to show dates nicely
-    ax1.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
-    ax1.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
-
 
     # --- Plot 2: Histogram of Daily Returns ---
     ax2.hist(data['Daily_Return'].dropna(), bins=50, color='green', alpha=0.7)
@@ -149,82 +103,19 @@ def create_dashboard(ticker, data):
     ax2.set_ylabel('Frequency', fontsize=12)
     ax2.grid(True)
 
-
     # --- Plot 3: Volatility Chart ---
     ax3.plot(data.index, data['Volatility'], label='20-Day Rolling Volatility', color='purple')
     ax3.set_title('20-Day Rolling Volatility', fontsize=16)
     ax3.set_xlabel('Date', fontsize=12)
     ax3.set_ylabel('Standard Deviation', fontsize=12)
     ax3.grid(True)
-    # Format the x-axis
-    ax3.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
-    ax3.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
 
-
-    plt.tight_layout(rect=[0, 0, 1, 0.96]) # Adjust layout to prevent title overlap
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.show()
 
-# Generate the dashboard for each stock
+# Generate dashboards for all stocks
 for ticker in tickers:
     if ticker in stock_data:
         create_dashboard(ticker, stock_data[ticker])
 
-# ----------------------------------------------------------------------------
-# Step 5: Dynamic Insight Summaries
-# ----------------------------------------------------------------------------
-# This function generates a text-based summary of the stock's current
-# situation based on the calculated indicators.
-
-def generate_insight_summary(ticker, data):
-    """Creates a dynamic summary of the stock's performance."""
-    if data.empty or len(data) < 50: # Ensure enough data for 50-day SMA
-        print(f"\nNot enough data to generate a summary for {ticker}.")
-        return
-
-    print(f"\n--- Dynamic Insight Summary for {ticker} ---")
-
-    # Get the latest data points
-    latest = data.iloc[-1]
-    previous = data.iloc[-2]
-
-    # 1. Price and Trend Analysis
-    price_info = f"Latest Close Price: ${latest['Close']:.2f}"
-    trend = "Neutral"
-    if latest['SMA_20'] > latest['SMA_50'] and previous['SMA_20'] <= previous['SMA_50']:
-        trend = "Bullish (Golden Cross Signal)"
-    elif latest['SMA_20'] < latest['SMA_50'] and previous['SMA_20'] >= previous['SMA_50']:
-        trend = "Bearish (Death Cross Signal)"
-    elif latest['SMA_20'] > latest['SMA_50']:
-        trend = "Currently in a Bullish Trend"
-    else:
-        trend = "Currently in a Bearish Trend"
-
-    # 2. Returns and Volatility Analysis
-    avg_return = data['Daily_Return'].mean()
-    latest_volatility = latest['Volatility']
-    risk_level = "Low"
-    if latest_volatility > data['Volatility'].quantile(0.75):
-        risk_level = "High"
-    elif latest_volatility > data['Volatility'].quantile(0.50):
-        risk_level = "Moderate"
-
-    # 3. Print the summary
-    print(f"1. Performance Snapshot:")
-    print(f"   - {price_info}")
-    print(f"   - Market Trend: {trend}")
-
-    print(f"\n2. Risk Analysis:")
-    # Corrected percentage formatting by multiplying by 100
-    print(f"   - Average Daily Return: {(avg_return * 100):.4f}%")
-    print(f"   - Latest 20-Day Volatility: {latest_volatility:.4f}")
-    print(f"   - Current Risk Profile: {risk_level}")
-
-    print("\nDisclaimer: This is a data-driven summary and not financial advice.")
-    print("-" * 50)
-
-
-# Generate summaries for all stocks
-for ticker in tickers:
-    if ticker in stock_data:
-        generate_insight_summary(ticker, stock_data[ticker])
-
+print("\n--- Script Finished ---")
