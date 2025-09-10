@@ -1,1 +1,1 @@
-![AAPL Stock Analysis Dashboard](AAPL_dashboard.jpeg)
+![AAPL Stock Analysis Dashboard](AAPL_dashboard.jpg)
